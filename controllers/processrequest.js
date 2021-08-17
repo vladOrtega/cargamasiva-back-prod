@@ -1,0 +1,536 @@
+'use strict'
+const crypto = require('crypto');
+const bcrypt = require('bcrypt');
+
+//Import MODELS
+const Settings = require('./setting.comtroller');
+const apiAdminModel = require('../models/api_admin.model');
+const path = require('path');
+const fs = require('fs')
+const shell = require('shelljs');
+const imageThumbnail = require('image-thumbnail');
+const encrypt = require('../modules/decryptCode')
+const apiUserConsolaModel = require('../models/api_user.consola.model');
+const service = require('../modules/encryptToken');
+
+module.exports = {
+    resolveProcessRequest: resolveProcessRequest,
+    validateUser: validateUser,
+    apiPostFile: apiPostFile,
+    apiPost: apiPost,
+    apiGet: apiGet
+}
+
+function resolveProcessRequest(data) {
+    return new Promise(function (resolve, reject) {
+        var clearData = data.palabra.split(' ').join('+')
+        var dataArray = encrypt.decrypt(clearData, resolve).split("|");
+
+        if (dataArray != undefined && dataArray != "") {
+            if (dataArray[0] == 100) {
+                Settings.getSettings()
+                    .then(function (result) {
+                        resolve(result);
+                    });
+            }
+        } else {
+            resolve({
+                valido: 0,
+                mensaje: "Error al procesar la peticion"
+            })
+        }
+    })
+}
+
+function validateUser(datos) {
+    return new Promise(function (resolve, reject) {
+        if (datos.key) {
+            //Validar Key
+            apiUserConsolaModel.validateUserKey(datos.key).then(function (result) {
+                if (!result.err) {
+                    let validaUser = result.result;
+                    if (validaUser.length > 0) {
+                        let datos = {
+                            usu_id: validaUser[0].api_user_id,
+                            api_user_name: validaUser[0].api_user_name
+                        }
+                        resolve({
+                            valido: 1,
+                            mensaje: "Datos correctos",
+                            token: service.createToken(datos),
+                            test: global.Metodos
+                            //addenda: validaUser
+                        });
+                    } else {
+                        resolve({
+                            valido: 0,
+                            mensaje: "Llave no válida"
+                        });
+                    }
+                } else {
+                    resolve({
+                        valido: 0,
+                        mensaje: "Error al obtener los datos, intente nuevamente"
+                    });
+                }
+            });
+        } else {
+            //reject("Datos incorrectos");
+            reject("400");
+        
+        }
+    })
+}
+
+function getNip(datosUsr) {
+    bcrypt.hash(datosUsr.uNip, null, null, function (err, hash) {
+        if (err) {
+            return resolve({
+                error: 'Error no se pudo generar la contraseña (bcrypt)'
+            });
+        } else {
+            console.log("nip->", hash)
+            //datosUsr.uNip = hash;
+        }
+    })
+}
+
+function apiGet(metodo) {
+    return new Promise(function (resolve, reject) {
+        //Valida que el metodo exista
+        //apiAdminModel.validateMetodo(metodo, 'get').then(function (result) {
+            let result = apiAdminModel.validateMetodo(metodo, 'get');
+            if (!result.err) {
+                let metodoApi = result.result;
+                if (metodoApi.length > 0) {
+                    //Ejecuta query:
+                    let query = metodoApi[0].apimetod_store + " ()";
+                    apiAdminModel.executeStored(query).then(function (result) {
+                        if (!result.err) {
+                            if (result.result.length > 0) {
+                                resolve({
+                                    valido: 1,
+                                    mensaje: "Datos correctos",
+                                    addenda: result.result[0]
+                                });
+                            } else {
+                                resolve({
+                                    valido: 0,
+                                    mensaje: "No existen datos, favor de verificar",
+                                });
+                            }
+                        } else {
+                            resolve({
+                                valido: 0,
+                                mensaje: "Error al ejecutar la consulta, favor de verificar",
+                            });
+                        }
+                    });
+                } else {
+                    reject("404");
+                    /*resolve({
+                        valido: 0,
+                        mensaje: "Error, No existe el metodo"
+                    });*/
+                }
+            } else {
+                reject("405");
+                /*
+                resolve({
+                    valido: 0,
+                    mensaje: "Error al obtener los datos, intente nuevamente"
+                });*/
+            }
+        //});
+
+    });
+}
+
+function apiPost(metodo, d) {
+    console.log(d);
+    return new Promise(async function (resolve, reject) {
+        //console.log("-->" + JSON.stringify(metodo));
+        //Valida que el metodo exista
+        let result = apiAdminModel.validateMetodo(metodo, 'post');
+        //apiAdminModel.validateMetodo(metodo, 'post').then(function (result) {
+            if (!result.err) {
+                let metodoApi = result.result;
+                if (metodoApi.length > 0) {
+                    //Obtener parametros
+                    //apiAdminModel.getParamsMetodo(metodoApi[0]).then(async function (result) {
+                        result = apiAdminModel.getParamsMetodo(metodoApi[0]);
+                        if (!result.err) {
+                            var paramsApi = result.result;
+                            let parametrosEntrada = 0;
+                            //Validacion tipo de campo
+                            let valorEncriptar = '';
+                            let campoEncriptar = '';
+                            let valorJSON = '';
+                            let valorIndice = 0;
+                            if(paramsApi.length == Object.keys(d).length){
+                                // for para buscar un 4
+                                for (const value of paramsApi) {
+                                    //tienne hash password?
+                                    if (value.apimetodcamp_key == 4) {
+                                        valorEncriptar = d[value.apimetodcamp_nombre];
+                                        campoEncriptar = value.apimetodcamp_nombre;
+                                        if (valorEncriptar.length < 20) {
+                                            // bcrypt async
+                                            var hashNew = bcrypt.hashSync(valorEncriptar, 10); //getNip({ password: valorEncriptar });
+                                            if (hashNew) {
+                                                d[campoEncriptar] = hashNew;
+                                            }
+                                        }
+                                    }
+                                    //tienne encriptar valor?
+                                    if (value.apimetodcamp_key == 5) {
+                                        valorEncriptar = d[value.apimetodcamp_nombre];
+                                        campoEncriptar = value.apimetodcamp_nombre;
+                                        if(valorEncriptar){
+                                            // bcrypt async
+                                            //var hashNew = bcrypt.hashSync(valorEncriptar, 10); //getNip({ password: valorEncriptar });
+                                            var hashNew = encrypt.encryptData(valorEncriptar);
+                                            if(hashNew){
+                                                d[campoEncriptar] = hashNew.response;
+                                            }
+                                        }
+                                    }
+                                    //tiene carga masiva?
+                                    if(value.apimetodcamp_key == 6 || value.apimetodcamp_key == 7){
+                                        valorJSON = d[value.apimetodcamp_nombre];
+                                        if(valorJSON){
+                                            //convertir a JSON
+                                            valorJSON = JSON.parse(valorJSON);
+                                        }
+                                        if(value.apimetodcamp_key == 7) valorIndice = 1;
+                                    }
+                                }
+
+                                let arryError = [];
+                                let arryInsert = [];
+                                let arryReturn = [];
+                                let indexInsert = 0;
+                                if(valorJSON){
+                                    //masaivo
+                                    for(let objJSON of valorJSON){
+                                        arryInsert.push(objJSON);
+                                    }
+                                } else {
+                                    //meter push a array
+                                    var objeto = new Object();
+                                    for (const value of paramsApi) {
+                                        if(d[value.apimetodcamp_nombre]) objeto[value.apimetodcamp_nombre] = d[value.apimetodcamp_nombre];
+                                    }
+                                    arryInsert.push(objeto);
+                                }
+                                //quitar tipo 6 de arrays
+                                paramsApi = paramsApi.filter(function( obj ) {
+                                    return obj.apimetodcamp_key !== 6;
+                                });
+                                //quitar tipo 7 de arrays
+                                paramsApi = paramsApi.filter(function( obj ) {
+                                    return obj.apimetodcamp_key !== 7;
+                                });
+                                for(const item of arryInsert){
+                                    parametrosEntrada = 0;
+                                    var arrParams = [];
+                                    //Concatena valores para stored
+                                    //paramsApi.forEach(function (value, i) {
+                                    for (const value of paramsApi) {
+                                        if (item.hasOwnProperty(value.apimetodcamp_nombre)) {
+                                            let cadena = " @" + value.apimetodcamp_nombre + " := '" + item[value.apimetodcamp_nombre] + "'";
+                                            arrParams.push(cadena);
+                                            //arrParams.push(d[value.apimetodcamp_nombre]); 
+                                            parametrosEntrada++;
+                                        }
+                                    }
+
+                                    if(valorIndice == 1){
+                                        //Agregar parametro indicador Indice
+                                        if(indexInsert == (arryInsert.length-1)) arrParams.push( "@index = "+valorIndice);
+                                        else arrParams.push( " @index = 0");
+                                    }
+                                    
+                                    if (parametrosEntrada == paramsApi.length) {
+                                        //Ejecuta query:
+                                        let query = metodoApi[0].apimetod_store + "(" + arrParams.toString() + ")";
+                                        let regresoQ = await executeQuery(query, metodoApi[0].apimetod_id);
+                                        let errorQ = false; 
+                                        if(regresoQ){
+                                            if(regresoQ.length == 1){
+                                                if(regresoQ[0].hasOwnProperty('valido')){
+                                                    if(regresoQ[0].valido == 0) {
+                                                        errorQ = true;
+                                                        item.error = regresoQ[0].mensaje;
+                                                    }
+                                                }
+                                            } 
+                                            if(regresoQ && !errorQ) {
+                                                if(regresoQ.length > 1) arryReturn = Object.assign([], regresoQ);
+                                                else if(regresoQ.length == 1) arryReturn.push(regresoQ[0]);
+                                            }
+                                            else arryError.push(item);
+                                        } 
+                                    } else {
+                                        item.error = "Error en los parametros, favor de verificar";
+                                        arryError.push(item);
+                                        /*resolve({
+                                            valido: 0,
+                                            mensaje: "Error en los parametros, favor de verificar",
+                                        });*/
+                                    } // parametrosEntrada = length
+                                    indexInsert++;
+                                } //for array
+                                let tmpValido = 1;
+                                if (arryError.length > 0) { 
+                                    tmpValido = 0; 
+                                    reject('400');
+                                } else {
+                                    if(valorIndice == 1){
+                                        arryReturn = arryReturn.pop();  
+                                    }
+                                    resolve({
+                                        valido: tmpValido,
+                                        addenda: arryReturn,
+                                        errores: arryError
+                                    })
+                                }
+                            } else {
+                                reject('400');
+                            }
+                        } else {
+                            resolve({
+                                valido: 0,
+                                mensaje: "Error al obtener los datos, intente nuevamente"
+                            });
+                        }
+                    //});
+                } else {
+                    reject("404");
+                    /*resolve({
+                        valido: 0,
+                        mensaje: "Error, No existe el metodo"
+                    });*/
+                }
+            } else {
+                reject("405")
+                /*resolve({
+                    valido: 0,
+                    mensaje: "Error al obtener los datos, intente nuevamente"
+                });*/
+            }
+        //});
+
+    });
+}
+
+/*
+  apimetodcamp_key:
+      1 primary key
+      2 image (ruta de la imagen donde se va a guardar, la peticion debe de traer la ruta
+                donde se va guardar en el server media\xxxx y la genera automaticamente si no existe
+                y se guarda la ruta en este mismo campo ya con el nombre de la imagen)
+      3 thumbnail (ruta de la imagen donde se va guardar el thumbnail, la imagen que se
+                manda y se guarda la ruta en este mismo campo ya con el nombre de la imagen)
+      4 hash password
+      5 encriptar valor
+      6 json array masivo
+      7 json array masivo con indice de respuesta (ultimo indice regresa lo que regresa el stored cuando index = 1)
+*/
+function apiPostFile(metodo, d, file) {
+    return new Promise(function (resolve, reject) {
+        //Valida que el metodo exista
+        apiAdminModel.validateMetodo(metodo, 'postfile').then(function (result) {
+            if (!result.err) {
+                let metodoApi = result.result;
+                if (metodoApi.length > 0) {
+                    //Obtener parametros
+                    apiAdminModel.getParamsMetodo(metodoApi[0]).then(function (result) {
+                        if (!result.err) {
+                            var urlFinal = "";
+                            var campoUrl = "";
+                            var urlFinalThumb = "";
+                            var campoURLThumb = "";
+                            var paramsApi = result.result;
+                            let parametrosEntrada = 0;
+                            var arrParams = [];
+                            for (const value of paramsApi) {
+                                //tienne image?
+                                if (value.apimetodcamp_key == 2) {
+                                    urlFinal = d[value.apimetodcamp_nombre];
+                                    campoUrl = value.apimetodcamp_nombre;
+                                }
+                                //tiene thumbail?
+                                if (value.apimetodcamp_key == 3) {
+                                    urlFinalThumb = d[value.apimetodcamp_nombre];
+                                    campoURLThumb = value.apimetodcamp_nombre;
+                                }
+                            }
+                            //Checa si el path destino no existe
+                            if (urlFinal) {
+
+                                if (!urlFinal.includes('.')) {
+                                    if (!fs.existsSync(urlFinal)) {
+                                        //crea el path
+                                        shell.mkdir('-p', urlFinal);
+                                    }
+                                    //Upload File files.path,files.name,
+                                    if (file && urlFinal) {
+                                        let filename = path.basename(file.path);
+                                        urlFinal = urlFinal + filename;
+                                        fs.copyFileSync(file.path, urlFinal);
+                                        console.log('Successfully renamed - file!')
+                                        d[campoUrl] = urlFinal;
+                                    }
+                                }
+                            }
+                            //upload Thumbnail
+                            var makeThumb = null;
+                            if (file && urlFinalThumb) {
+                                if (!fs.existsSync(urlFinalThumb)) {
+                                    //crea el path
+                                    shell.mkdir('-p', urlFinalThumb);
+                                }
+                                let filename = path.basename(file.path);
+                                let thumbname = urlFinalThumb + filename;
+                                makeThumb = makeThumbFunc(file, urlFinalThumb);
+                                if (makeThumb) {
+                                    d[campoURLThumb] = thumbname;
+                                }
+                            }
+                            //Delete temporal
+                            if (makeThumb) {
+                                fs.unlinkSync(file.path);
+                            }
+
+                            //paramsApi.forEach(function (value, i) {
+                            for (const value of paramsApi) {
+                                if (d.hasOwnProperty(value.apimetodcamp_nombre)) {
+                                    let cadena = " @" + value.apimetodcamp_nombre + " := '" + d[value.apimetodcamp_nombre] + "'";
+                                    arrParams.push(cadena);
+                                    //arrParams.push(d[value.apimetodcamp_nombre]);
+                                    parametrosEntrada++;
+                                }
+                            }
+
+                            //Save Data
+                            if (parametrosEntrada == paramsApi.length) {
+                                //Ejecuta query:
+                                let query = metodoApi[0].apimetod_store + "(" + arrParams.toString() + ")";
+                                apiAdminModel.executeStored(query).then(function (result) {
+                                    let regreso;
+                                    if (Array.isArray(result.result)) regreso = result.result[0];
+                                    else regreso = result.result;
+                                    if (!result.err) {
+                                        resolve({
+                                            valido: 1,
+                                            mensaje: "Datos correctos",
+                                            addenda: regreso
+                                        });
+                                    } else {
+                                        resolve({
+                                            valido: 0,
+                                            mensaje: "Error al ejecutar la consulta, favor de verificar",
+                                        });
+                                    }
+                                });
+
+                            } else {
+                                resolve({
+                                    valido: 0,
+                                    mensaje: "Error en los parametros, favor de verificar",
+                                });
+                            }
+
+                        } else {
+                            resolve({
+                                valido: 0,
+                                mensaje: "Error al obtener los datos, intente nuevamente"
+                            });
+                        }
+                    });
+                } else {
+                    resolve({
+                        valido: 0,
+                        mensaje: "Error, No existe el metodo"
+                    });
+                }
+            } else {
+                resolve({
+                    valido: 0,
+                    mensaje: "Error al obtener los datos, intente nuevamente"
+                });
+            }
+        });
+
+    });
+}
+
+async function makeThumbFunc(file, urlFinalThumb) {
+
+    var makeThumb = await imageThumbnail(file.path).then(thumbnail => {
+        let filename = path.basename(file.path);
+        let thumbname = urlFinalThumb + filename;
+        fs.writeFile(thumbname, thumbnail, 'base64', function (err) {
+            if (err) {
+                console.log(err);
+            } else {
+                //d[campoURLThumb] = thumbname;
+                console.log("Exito Thumbnail");
+            }
+        });
+    }).catch(err => console.error(err));
+
+    return makeThumb;
+}
+
+async function executeQuery(query, metodoID){
+
+    var returnQuery = await apiAdminModel.executeStored(query).then(function (result) {
+            if (!result.err) {
+                let resultadoPost = result.result[0];
+                if(resultadoPost.length > 0){
+                    let regresoD = decryptReturn(resultadoPost, metodoID) 
+                    if(regresoD) return regresoD;
+                } else return null;
+            } else {
+                return null;
+                /*resolve({
+                    valido: 0,
+                    mensaje: "Error al ejecutar la consulta, favor de verificar",
+                });*/
+            } //if result.err
+        }); // executeStored
+
+    return returnQuery;
+}
+
+async function decryptReturn(resultadoPost, metodoID){
+    let keys = "";
+    let objetoTemp = resultadoPost[0];
+    keys = Object.keys(objetoTemp);
+    //Validar si hay campos con tipo 5 (desencriptar)
+
+    //var returnDecrypt = apiAdminModel.getParamsMetodoType(keys.join(','),5,metodoID).then(function (result) {
+    var result = apiAdminModel.getParamsMetodoType(keys.join(','),5,metodoID);
+            if (!result.err) {
+                if(result.result.length > 0){
+                    var paramsApi = result.result[0];
+                    if(paramsApi.length > 0){
+                        let regresoQry = resultadoPost.map(function(elem){
+                                            for(let campo of paramsApi){
+                                                elem[campo.col_nombre] = decrypDataGet(elem[campo.col_nombre]);
+                                            }
+                                            return elem;
+                                        });
+                        return regresoQry;
+                    } else {
+                        return resultadoPost;
+                    }
+                }
+                else return resultadoPost;
+            } else {
+                return null;
+            }
+    //}); //fin getParamsMetodoType
+  }
