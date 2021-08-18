@@ -26,7 +26,7 @@ function getParamsMetodo(metodo) {
 }
 
 function executeStored(query) {
-    return helpers.mysqlQuery('GET', conn_mysql, "CALL " + query, '')
+    return helpers.executeQuery("EXEC " + query);
 }
 
 function getParamsMetodoType(columnas, tipo, idmetodo){

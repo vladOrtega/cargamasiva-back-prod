@@ -1,49 +1,39 @@
-var mysql = require('mysql');
-conn_mysql = null;
+'use strinct'
+var sql = require("mssql");
 var fs = require('fs');
-var mysql_cred = JSON.parse(fs.readFileSync(__dirname + '/cred_mysql', 'utf8'));
 
-conn_mysql = mysql.createConnection(mysql_cred);
-
-//probando
-conn_mysql.connect(function (error) {
-  if (!!error) console.log(error);
-  else console.log('mYSQL Database Connected!');
-});
-
-conn_mysql.config.queryFormat = function (query, values) {
-  if (!values) return query
-  return query.replace(/\@(\w+)/g, function (txt, key) {
-    if (values.hasOwnProperty(key)) {
-      return this.escape(values[key])
-    }
-    return txt
-  }.bind(this))
+module.exports = {
+  executeQuery: executeQuery
 }
 
-module.exports.mysqlQuery = function (tipo, c, query, d) {
+var cred_sqlserver = JSON.parse(fs.readFileSync(__dirname + '/cred_sqlserver', 'utf8'));
+
+function executeQuery(query) {
+  console.log("query: " + query);
   return new Promise(function (resolve, reject) {
-    conn_mysql.query(query, d, function (err, rs) {
-      console.log("query", query)
-      if (err) {
-        console.log("error", err);
-        resolve({
-          err: true,
-          description: err
-        });
-        //process.exit(1);
-      } else {
-        if (tipo == 'GET') {
+    sql.connect(cred_sqlserver, function (err) {
+      if (err)
+        console.log(err);
+      // create Request object
+      let sqlRequest = new sql.Request();
+      // query to the database and get the records
+      sqlRequest.query(query, function (err, data) {
+        if (err) {
+          console.log(err)
+          resolve({
+            err: true
+          });
+        } else { 
+          let resData = data.recordset;
+          let resMultiple = data.recordsets;
+          sql.close();
           resolve({
             err: false,
-            result: rs
-          });
-        } else {
-          resolve({
-            err: false
+            result: resData,
+            results: resMultiple
           });
         }
-      }
+      });
     });
-  });
+  })
 }

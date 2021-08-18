@@ -5,52 +5,49 @@ module.exports = {
     verificaExistUsr: verificaExistUsr,
     ObtenerUsuarioId: ObtenerUsuarioId,
     getUsuarioByUserName: getUsuarioByUserName,
-    getOnlyUsuarioByUserName: getOnlyUsuarioByUserName,
+    //getOnlyUsuarioByUserName: getOnlyUsuarioByUserName,
     obtenerUsuarios: obtenerUsuarios,
     GetMaxUsuarioSistema: GetMaxUsuarioSistema,
     GetUsuarioSistemaById: GetUsuarioSistemaById,
     Update: Update,
     Add: Add,
-    addUser: addUser, 
+    //addUser: addUser, 
     obtenerPerfilesConsola: obtenerPerfilesConsola
 }
 
-
 function verificaExistUsr(data) {
     let query = "SELECT * FROM usuario_sistema WHERE  username =" + data.username + "  iUsrName and usu_status = 1;";
-    return helpers.mysqlQuery('GET', conn_mysql, query, data)
+    return helpers.executeQuery(query);
 }
 
 function ObtenerUsuarioId(data) {
     let query = "SELECT * FROM usuario_sistema WHERE  id_usuario_sistema =" + data.username + " and usu_status = 1;";
-    return helpers.mysqlQuery('GET', conn_mysql, query, data)
-}
-
-function getOnlyUsuarioByUserName(data){
-    let query = "select * from usuario where usu_email = '" + data.username + "' and usu_status = 1";
-    return helpers.mysqlQuery('GET', conn_mysql, query, data)
+    return helpers.executeQuery(query);
 }
 
 function getUsuarioByUserName(data) {
     let query = "select * from usuario_sistema where username = '" + data.username + "' and usu_status = 1";
-    return helpers.mysqlQuery('GET', conn_mysql, query, data)
+    return helpers.executeQuery(query);
 }
- 
+
 function obtenerUsuarios() {
-    let data = '';
     let query = "select * from usuario_sistema where  usu_status = 1";
-    return helpers.mysqlQuery('GET', conn_mysql, query, data)
+    return helpers.executeQuery(query);
+}
+
+function obtenerUsuario(idUsuario) {
+    let query = "select * from usuario_sistema where  usu_status = 1 and id_usuario_sistema ="+ idUsuario.id_usuario_sistema;
+    return helpers.executeQuery(query);
 }
 
 function GetMaxUsuarioSistema() {
-    let data = '';
-    let query = "select * from usuario_sistema LIMIT 1 ORDER BY 1 DESC";
-    return helpers.mysqlQuery('GET', conn_mysql, query, data)
+    let query = "select top 1 * from usuario_sistema ORDER BY 1 DESC";
+    return helpers.executeQuery(query);
 }
 
 function GetUsuarioSistemaById(data) {
     let query = "SELECT * FROM usuario_sistema where id_usuario_sistema =" + data.id_usuario_sistema;
-    return helpers.mysqlQuery('GET', conn_mysql, query, data)
+    return helpers.executeQuery(query);
 }
 
 function Update(data) {
@@ -65,25 +62,18 @@ function Update(data) {
             " where id_usuario_sistema =" + data.id_usuario_sistema;
     }
 
-    return helpers.mysqlQuery('PUT', conn_mysql, query, data)
+    return helpers.executeQuery(query);
 }
 
 function Add(data) {
-    
     let query = "insert into usuario_sistema " +
         " ( username, name, nip,id_perfil, usu_status, register_date ) " +
-        " VALUES ( '" + data.username + "', '" + data.name + "','" + data.nip + "', " + data.id_perfil + ", 1, now() )";
-    console.log(query, data);
-    return helpers.mysqlQuery('PUT', conn_mysql, query, data)
-}
-
-function addUser(data) {
-    let query = "call addUser('" + data.username + "', '" + data.nip + "','" + data.name + "', " + data.id_perfil + ", "+ data.usu_edit +")";
-    return helpers.mysqlQuery('GET', conn_mysql, query, data)
+        " VALUES ( '" + data.username + "', '" + data.name + "','" + data.nip + "', " + data.id_perfil + ", 1, getdate() )";
+    return helpers.executeQuery(query);
 }
 
 
 function obtenerPerfilesConsola() {
     let query = "SELECT * from  perfil where status_perfil = 1 order by descripcion asc;";
-    return helpers.mysqlQuery('GET', conn_mysql, query, data)
+    return helpers.executeQuery(query);
 }

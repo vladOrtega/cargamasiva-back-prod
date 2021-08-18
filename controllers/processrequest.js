@@ -18,7 +18,7 @@ module.exports = {
     validateUser: validateUser,
     apiPostFile: apiPostFile,
     apiPost: apiPost,
-    apiGet: apiGet
+    apiGet: apiGet,
 }
 
 function resolveProcessRequest(data) {
@@ -104,7 +104,8 @@ function apiGet(metodo) {
                 let metodoApi = result.result;
                 if (metodoApi.length > 0) {
                     //Ejecuta query:
-                    let query = metodoApi[0].apimetod_store + " ()";
+                    //let query = metodoApi[0].apimetod_store + " ";
+                    let query = metodoApi[0].apimetod_store + ";";
                     apiAdminModel.executeStored(query).then(function (result) {
                         if (!result.err) {
                             if (result.result.length > 0) {
@@ -167,7 +168,8 @@ function apiPost(metodo, d) {
                             let campoEncriptar = '';
                             let valorJSON = '';
                             let valorIndice = 0;
-                            if(paramsApi.length == Object.keys(d).length){
+                            
+                            //if(paramsApi.length == Object.keys(d).length){
                                 // for para buscar un 4
                                 for (const value of paramsApi) {
                                     //tienne hash password?
@@ -238,7 +240,7 @@ function apiPost(metodo, d) {
                                     //paramsApi.forEach(function (value, i) {
                                     for (const value of paramsApi) {
                                         if (item.hasOwnProperty(value.apimetodcamp_nombre)) {
-                                            let cadena = " @" + value.apimetodcamp_nombre + " := '" + item[value.apimetodcamp_nombre] + "'";
+                                            let cadena = " @" + value.apimetodcamp_nombre + " = '" + item[value.apimetodcamp_nombre] + "'";
                                             arrParams.push(cadena);
                                             //arrParams.push(d[value.apimetodcamp_nombre]); 
                                             parametrosEntrada++;
@@ -253,7 +255,8 @@ function apiPost(metodo, d) {
                                     
                                     if (parametrosEntrada == paramsApi.length) {
                                         //Ejecuta query:
-                                        let query = metodoApi[0].apimetod_store + "(" + arrParams.toString() + ")";
+                                        //let query = metodoApi[0].apimetod_store + "(" + arrParams.toString() + ")";
+                                        let query = metodoApi[0].apimetod_store + arrParams.toString();
                                         let regresoQ = await executeQuery(query, metodoApi[0].apimetod_id);
                                         let errorQ = false; 
                                         if(regresoQ){
@@ -295,9 +298,9 @@ function apiPost(metodo, d) {
                                         errores: arryError
                                     })
                                 }
-                            } else {
-                                reject('400');
-                            }
+                            //} else {
+                            //    reject('400');
+                            //}
                         } else {
                             resolve({
                                 valido: 0,
@@ -406,7 +409,7 @@ function apiPostFile(metodo, d, file) {
                             //paramsApi.forEach(function (value, i) {
                             for (const value of paramsApi) {
                                 if (d.hasOwnProperty(value.apimetodcamp_nombre)) {
-                                    let cadena = " @" + value.apimetodcamp_nombre + " := '" + d[value.apimetodcamp_nombre] + "'";
+                                    let cadena = " @" + value.apimetodcamp_nombre + " = '" + d[value.apimetodcamp_nombre] + "'";
                                     arrParams.push(cadena);
                                     //arrParams.push(d[value.apimetodcamp_nombre]);
                                     parametrosEntrada++;
@@ -488,10 +491,12 @@ async function executeQuery(query, metodoID){
 
     var returnQuery = await apiAdminModel.executeStored(query).then(function (result) {
             if (!result.err) {
-                let resultadoPost = result.result[0];
-                if(resultadoPost.length > 0){
-                    let regresoD = decryptReturn(resultadoPost, metodoID) 
-                    if(regresoD) return regresoD;
+                let resultadoPost = result.result;
+                if(resultadoPost){
+                    if(resultadoPost.length > 0){
+                        let regresoD = decryptReturn(resultadoPost, metodoID) 
+                        if(regresoD) return regresoD;
+                    } else return null;
                 } else return null;
             } else {
                 return null;

@@ -140,6 +140,7 @@ function Add(datos) {
                         valido: 0
                     })
                 } else {
+                    console.log(datos.nip,10);
                     var hashNew = bcrypt.hashSync(datos.nip, 10);
 
                     if (!hashNew) {
@@ -148,7 +149,7 @@ function Add(datos) {
                         });
                     } else {
                         datos.nip = hashNew;
-                        UsuarioSistemaModel.addUser(datos)
+                        UsuarioSistemaModel.Add(datos)
                             .then(function (result) {
                                 if (result.err) {
                                     resolve({
@@ -159,7 +160,7 @@ function Add(datos) {
                                     //let valor = result.result[0];
                                     resolve(!result.err ? {
                                         valido: 1,
-                                        addenda: result.result[0],
+                                        addenda: result.result,
                                         mensaje: "Se agrego Correctamente"
                                     } : reject({
                                         valido: 0,
@@ -225,6 +226,7 @@ function Add(datos) {
 }
 
 function Update(d) {
+    //console.log(d);
     return new Promise(function (resolve, reject) {
         UsuarioSistemaModel.GetUsuarioSistemaById(d)
             .then(function (result) {

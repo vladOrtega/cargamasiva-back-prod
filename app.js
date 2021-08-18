@@ -19,13 +19,15 @@ main.start()
   
     AccionModel.setFunciones().then(async function (result) {
       if (!result.err) {
-        global.Metodos = result.result[0];
+        
+        if(result.result.length > 0) global.Metodos = result.result;
+        else global.Metodos = [];
+        
         for (const metodo of global.Metodos) {
             let regreso = await AccionModel.getParamsFunciones(metodo);
             metodo.parametros = regreso.result;
         }
-        //console.log(global.Metodos);
-        console.log("finish load");
+        console.log("finish load " + global.Metodos.length + " methods");
       }else{
         console.log("Error status: " + result.err);
       }

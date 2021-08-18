@@ -2,13 +2,14 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../midlewares/auth');
 const UsuarioSistemaCtrl = require('../controllers/usuario.consola.controller');
+const crypt = require('../modules/decryptCode');
 
 //router.post('/IniciarSesion', iniciarSesion);
 router.get('/session_username/:username/:nip', getUsuarioSession);
 router.get('/session_username_val/:codigo', getUsuarioSessionVal);
 router.get('/obtenerUsuarios', obtenerUsuarios);
-router.post('/usuario-sistema-add', Add);
-router.post('/usuario-sistema-update', Update);
+router.post('/usuario-sistema-add', auth.isAuth, Add);
+router.post('/usuario-sistema-update', auth.isAuth, Update);
 router.get('/obtenerPerfilesConsola', auth.isAuth, obtenerPerfilesConsola);
 
 function getUsuarioSession(req, res) {
@@ -29,7 +30,8 @@ function getUsuarioSessionVal(req, res) {
             code: code
         })
         .then(function (result) {
-            res.json(result)
+            let dataEncrypt = crypt.encryptData(result);
+            res.json(dataEncrypt.response)
         })
 }
 
@@ -50,6 +52,7 @@ function Add(req, res) {
 
 function Update(req, res) {
     let datos = req.body;
+    //datos =  crypt.decrypData(datos);
     UsuarioSistemaCtrl.Update(datos)
         .then(function (result) {
             res.json(result);

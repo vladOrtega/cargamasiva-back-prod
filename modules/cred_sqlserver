@@ -1,0 +1,17 @@
+{
+  "user": "APICentral",
+  "password": "AjeXjFo8v*H@",
+  "server": "192.168.71.1",
+  "database": "CargaAgenda",
+  "multipleStatements": true,
+  "options": {
+    "encrypt": true,
+    "enableArithAbort": false,
+    "trustServerCertificate": true,
+    "cryptoCredentialsDetails": {
+          "minVersion": "TLSv1"
+      }
+  }
+} 
+
+
