@@ -112,7 +112,7 @@ function apiGet(metodo) {
                                 resolve({
                                     valido: 1,
                                     mensaje: "Datos correctos",
-                                    addenda: result.result[0]
+                                    addenda: result.result
                                 });
                             } else {
                                 resolve({
