@@ -12,6 +12,7 @@ const imagenesTemporal = multipart({
 })
 
 router.post('/processrequest-add', resolveProcessRequest)
+router.post('/processrequest-sb', resolveSimplyBook)
 router.post('/validateUser', validateUser)
 router.post('/apipost/:metodo', apiPost)
 router.get('/apiget/:metodo', apiGet)
@@ -20,6 +21,15 @@ router.post('/apipostfile/:metodo', imagenesTemporal, apiPostFile)
 function resolveProcessRequest(req, res) {
     var d = req.body;
     processrequestCtrl.resolveProcessRequest(d)
+        .then(function (result) {
+            res.json(result)
+        })
+}
+
+function resolveSimplyBook(req, res){
+    var d = req.body;
+    console.log(d);
+    processrequestCtrl.resolveSimplyBook(d)
         .then(function (result) {
             res.json(result)
         })

@@ -1,10 +1,12 @@
 'use strict'
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
+const XLSX = require('xlsx');
 
 //Import MODELS
 const Settings = require('./setting.comtroller');
 const apiAdminModel = require('../models/api_admin.model');
+const archivoModel = require('../models/archivo.model');
 const path = require('path');
 const fs = require('fs')
 const shell = require('shelljs');
@@ -12,9 +14,17 @@ const imageThumbnail = require('image-thumbnail');
 const encrypt = require('../modules/decryptCode')
 const apiUserConsolaModel = require('../models/api_user.consola.model');
 const service = require('../modules/encryptToken');
+//const jsonrcp = require('../midlewares/json-rpc-client');
+const SimplyBook = require("simplybook-js-api");
+var axios = require('axios');
+
+const { json } = require('express');
+
+const urlSB = "https://user-api.simplybook.plus";
 
 module.exports = {
     resolveProcessRequest: resolveProcessRequest,
+    resolveSimplyBook: resolveSimplyBook,
     validateUser: validateUser,
     apiPostFile: apiPostFile,
     apiPost: apiPost,
@@ -22,7 +32,7 @@ module.exports = {
 }
 
 function resolveProcessRequest(data) {
-    return new Promise(function (resolve, reject) {
+    return new Promise(async function (resolve, reject) {
         var clearData = data.palabra.split(' ').join('+')
         var dataArray = encrypt.decrypt(clearData, resolve).split("|");
 
@@ -32,6 +42,23 @@ function resolveProcessRequest(data) {
                     .then(function (result) {
                         resolve(result);
                     });
+            }
+            if (dataArray[0] == 201){
+                //console.log(dataArray)
+                let jsonXLS = await readXLS(dataArray);
+                if(jsonXLS){
+                    resolve({
+                        valido: 1,
+                        mensaje: "Archivo procesado",
+                        addenda: jsonXLS
+                    })
+                } else {
+                    resolve({
+                        valido: 0,
+                        mensaje: "Error al procesar el archivo"
+                    })
+                }
+
             }
         } else {
             resolve({
@@ -341,14 +368,16 @@ function apiPost(metodo, d) {
       7 json array masivo con indice de respuesta (ultimo indice regresa lo que regresa el stored cuando index = 1)
 */
 function apiPostFile(metodo, d, file) {
-    return new Promise(function (resolve, reject) {
+    return new Promise(async function (resolve, reject) {
         //Valida que el metodo exista
-        apiAdminModel.validateMetodo(metodo, 'postfile').then(function (result) {
+        let result = apiAdminModel.validateMetodo(metodo, 'postfile');
+        //apiAdminModel.validateMetodo(metodo, 'postfile').then(function (result) {
             if (!result.err) {
                 let metodoApi = result.result;
                 if (metodoApi.length > 0) {
                     //Obtener parametros
-                    apiAdminModel.getParamsMetodo(metodoApi[0]).then(function (result) {
+                    result = apiAdminModel.getParamsMetodo(metodoApi[0]);
+                    //apiAdminModel.getParamsMetodo(metodoApi[0]).then(function (result) {
                         if (!result.err) {
                             var urlFinal = "";
                             var campoUrl = "";
@@ -419,12 +448,15 @@ function apiPostFile(metodo, d, file) {
                             //Save Data
                             if (parametrosEntrada == paramsApi.length) {
                                 //Ejecuta query:
-                                let query = metodoApi[0].apimetod_store + "(" + arrParams.toString() + ")";
-                                apiAdminModel.executeStored(query).then(function (result) {
-                                    let regreso;
-                                    if (Array.isArray(result.result)) regreso = result.result[0];
-                                    else regreso = result.result;
-                                    if (!result.err) {
+                                //let query = metodoApi[0].apimetod_store + "(" + arrParams.toString() + ")";
+                                let query = metodoApi[0].apimetod_store + arrParams.toString();
+                                let regresoQ = await executeQuery(query, metodoApi[0].apimetod_id);
+                                //apiAdminModel.executeStored(query).then(function (result) {
+                                    //console.log("----",regresoQ)
+                                    let regreso = regresoQ;
+                                    //if (Array.isArray(regresoQ)) regreso = regresoQ;
+                                    //else regreso = regresoQ;
+                                    if (regresoQ) {
                                         resolve({
                                             valido: 1,
                                             mensaje: "Datos correctos",
@@ -436,7 +468,7 @@ function apiPostFile(metodo, d, file) {
                                             mensaje: "Error al ejecutar la consulta, favor de verificar",
                                         });
                                     }
-                                });
+                                //});
 
                             } else {
                                 resolve({
@@ -451,7 +483,7 @@ function apiPostFile(metodo, d, file) {
                                 mensaje: "Error al obtener los datos, intente nuevamente"
                             });
                         }
-                    });
+                    //});
                 } else {
                     resolve({
                         valido: 0,
@@ -464,9 +496,44 @@ function apiPostFile(metodo, d, file) {
                     mensaje: "Error al obtener los datos, intente nuevamente"
                 });
             }
-        });
+        //});
 
     });
+}
+
+function resolveSimplyBook(dataArray){
+    return new Promise(async function (resolve, reject) {
+        
+        if (dataArray) {
+            //ceonceta a simplybook
+            let _sucursal = await archivoModel.obtenSucursal({suc_id: dataArray.suc_id});
+            //console.log(_sucursal);
+            _sucursal = _sucursal.result[0];
+            let tokenSB = await getTokenSB(_sucursal);
+            //console.log(tokenSB.token, dataArray);
+            delete dataArray.suc_id;
+            console.log(tokenSB.token, dataArray);
+            let regreso = await setWorkDaySB(dataArray, tokenSB.token, _sucursal);
+            console.log(regreso)
+            if(regreso.respuesta){
+                resolve({
+                    valido: 1,
+                    mensaje: "Ingreso correcto",
+                })
+            } else {
+                resolve({
+                    valido: 0,
+                    mensaje: "Error al ingresar a SimplyBook",
+                })
+            }
+
+        } else {
+            resolve({
+                valido: 0,
+                mensaje: "Error al procesar la peticion"
+            })
+        }
+    })
 }
 
 async function makeThumbFunc(file, urlFinalThumb) {
@@ -538,4 +605,161 @@ async function decryptReturn(resultadoPost, metodoID){
                 return null;
             }
     //}); //fin getParamsMetodoType
+  }
+
+
+
+  async function readXLS(datos){
+
+    //obtener sucursales permitidas
+    var sucursalesFile = await archivoModel.obtenSucursales(datos[1]);
+    if(!sucursalesFile.err){
+        sucursalesFile = sucursalesFile.result
+    } else {
+        return null;
+    }
+    var workbook = XLSX.readFile(datos[2]);
+    var sheet_name_list = workbook.SheetNames;
+    var json_workbook = XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]], {raw: false});
+    //console.log(json_workbook);
+    //validar sucursales
+    console.log(sucursalesFile);
+    for(let i=0; i<json_workbook.length; i++){
+        let suc = sucursalesFile.filter(s => s.suc_empresa == json_workbook[i].sucursal);
+        if(suc){
+            json_workbook[i].valido = 1;
+        } else {
+            json_workbook[i].valido = 0;
+        }
+    }
+    //regresar json
+    return json_workbook;
+  }
+
+  async function getTokenSB(datos){
+    
+    return new Promise(function (resolve, reject) {
+        var data = JSON.stringify({
+            "jsonrpc": "2.0",
+            "method": "getUserToken",
+            "params": [
+            datos.suc_empresa,
+            datos.suc_usuario,
+            datos.suc_password
+            ],
+            "id": 1
+        });
+        
+        var config = {
+            method: 'post',
+            url: urlSB + '/login',
+            headers: { 
+            'Content-Type': 'application/json'
+            },
+            data : data
+        };
+        
+        axios(config)
+        .then(function (response) {
+            if(response){
+                let token = response.data;
+                resolve({token: token.result});
+            }
+        })
+        .catch(function (error) {
+            console.log(error);
+        });
+      
+    })  
+
+    /*
+    const simplyBook = new SimplyBook(
+        datos.suc_empresa,
+        '407910534bd38222e81f3856584f22ac024e36dfe1d526a782914dcd0cbb4211',
+        '2b670aeaa60b77f2ced356150702a75de24c884790d1788f8197800ad53ddb9c',
+        datos.suc_usuario,
+        datos.suc_password, 
+        false);
+
+    console.log(simplyBook);
+    // 建立Auth Service
+    let auth = simplyBook.createAuthService();
+    
+    // 取得Token
+    let token = await auth.getToken();
+    console.log(token);
+    return token;
+    */  
+
+    //let url = urlSB.replace('{{empresa}}',datos.suc_empresa);
+    /*
+    var loginClient = new jsonrcp.JSONRpcClient({
+        'url': urlSB + '/login',
+        'onerror': function (error) {},
+    });
+    console.log("token--",loginClient)
+    token = loginClient.getToken( datos.suc_usuario, datos.suc_password);
+    console.log(token);
+    return token;
+    */
+  }
+
+  async function setWorkDaySB(datos, token, suc){
+
+    return new Promise(function (resolve, reject) {
+        var data = JSON.stringify({
+            "jsonrpc": "2.0",
+            "method": "setWorkDayInfo",
+            "params": [
+                {
+                    "start_time": "07:00",
+                    "end_time": "18:00",
+                    "is_day_off": 0,
+                    "breaktime": datos.breaktime,
+                    "index": "",
+                    "name": datos.date,
+                    "date": datos.date,
+                    "unit_group_id": datos.unit_group_id,
+                    "event_id": ""
+                }
+            ],
+            "id": 2
+        });
+        
+        var config = {
+            method: 'post',
+            url: urlSB + '/admin/',
+            headers: { 
+            'X-User-Token': token, 
+            'X-Company-Login': suc.suc_empresa, 
+            'Content-Type': 'application/json'
+            },
+            data : data
+        };
+        console.log(config);
+        axios(config)
+        .then(function (response) {
+            if(response.data){
+                let resultado = response.data;
+                resolve({respuesta: resultado.result});
+            }
+        })
+        .catch(function (error) {
+            console.log(error);
+        });
+    }) 
+    /*
+    let url = urlSB.replace('{{empresa}}',suc.suc_empresa);
+
+    let client = new JSONRpcClient({
+        'url': url + '/admin/',
+        'headers': {
+            'X-Company-Login': datos.suc_usuario,
+            'X-User-Token': token
+        },
+        'onerror': function (error) {}
+    });
+
+    return client.setWorkDayInfo(datos);
+    */
   }
