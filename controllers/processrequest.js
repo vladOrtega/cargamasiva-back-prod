@@ -623,14 +623,46 @@ async function decryptReturn(resultadoPost, metodoID){
     var json_workbook = XLSX.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]], {raw: false});
     //console.log(json_workbook);
     //validar sucursales
-    console.log(sucursalesFile);
+    //console.log(sucursalesFile);
     for(let i=0; i<json_workbook.length; i++){
         let suc = sucursalesFile.filter(s => s.suc_empresa == json_workbook[i].sucursal);
-        if(suc){
-            json_workbook[i].valido = 1;
-        } else {
+        json_workbook[i].valido = 1;
+        if(!suc){
             json_workbook[i].valido = 0;
+        } else {
+            if(suc.length > 0) suc = suc[0];
         }
+        //console.log(json_workbook[i], suc)
+        //valida formato hora
+        let re = new RegExp('^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$');
+        let vIni = re.test(json_workbook[i].hora_inicio);
+        let vFin = re.test(json_workbook[i].hora_fin);
+        if(!vIni || !vFin) json_workbook[i].valido = 0; 
+        if(vIni && vFin){
+            let date = new Date(Date.parse(json_workbook[i].fecha));
+            console.log("fecha",date);
+            let dateNumber = date.getDay();
+            let dateSucIni = new Date(date);
+            //Fecha invalida - domingo
+            if(dateNumber == 0) json_workbook[i].valido = 0; 
+            if(dateNumber > 0 && dateNumber < 6) dateSucIni.setHours(suc.suc_ini_lv.split(':')[0], suc.suc_ini_lv.split(':')[1], '00');
+            else if (dateNumber == 6) dateSucIni.setHours(suc.suc_ini_s.split(':')[0], suc.suc_ini_s.split(':')[1], '00');
+            let dateSucFin = new Date(date);
+            if(dateNumber > 0 && dateNumber < 6) dateSucFin.setHours(suc.suc_fin_lv.split(':')[0], suc.suc_fin_lv.split(':')[1], '00');
+            else if (dateNumber == 6) dateSucFin.setHours(suc.suc_fin_s.split(':')[0], suc.suc_fin_s.split(':')[1], '00');
+            //horario ocupado:
+            let dateIni = new Date(date);
+            let dataFin = new Date(date);
+            dateIni.setHours(json_workbook[i].hora_inicio.split(':')[0], json_workbook[i].hora_inicio.split(':')[1], '00');
+            dataFin.setHours(json_workbook[i].hora_fin.split(':')[0], json_workbook[i].hora_fin.split(':')[1], '00');
+            //valida hora ini es menor a hora fin
+            if(dataFin < dateIni) json_workbook[i].valido = 0; 
+            //valida sucursal
+            if(dateSucIni > dateIni) json_workbook[i].valido = 0; 
+            if(dateSucFin < dataFin) json_workbook[i].valido = 0; 
+            //valida empalme
+        }
+
     }
     //regresar json
     return json_workbook;
@@ -639,13 +671,15 @@ async function decryptReturn(resultadoPost, metodoID){
   async function getTokenSB(datos){
     
     return new Promise(function (resolve, reject) {
+        let password = encrypt.decrypt(datos.suc_password);
+        console.log("------",password);
         var data = JSON.stringify({
             "jsonrpc": "2.0",
             "method": "getUserToken",
             "params": [
             datos.suc_empresa,
             datos.suc_usuario,
-            datos.suc_password
+            password
             ],
             "id": 1
         });
@@ -707,13 +741,21 @@ async function decryptReturn(resultadoPost, metodoID){
   async function setWorkDaySB(datos, token, suc){
 
     return new Promise(function (resolve, reject) {
+        let fecha = new Date(Date.parse(datos.fecha));
+        let dia = fecha.getDay();
+        let sucIni = suc.suc_ini_lv;
+        let sucFin = suc.suc_fin_lv;
+        if(dia == 6) {
+            sucIni = suc.suc_ini_s;
+            sucFin = suc.suc_fin_s;
+        }
         var data = JSON.stringify({
             "jsonrpc": "2.0",
             "method": "setWorkDayInfo",
             "params": [
                 {
-                    "start_time": "07:00",
-                    "end_time": "18:00",
+                    "start_time": sucIni,
+                    "end_time": sucFin,
                     "is_day_off": 0,
                     "breaktime": datos.breaktime,
                     "index": "",

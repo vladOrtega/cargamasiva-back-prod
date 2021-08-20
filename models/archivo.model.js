@@ -7,9 +7,7 @@ module.exports = {
 }
 
 function obtenSucursales(data) {
-    let query = "SELECT *, "+
-                "    (select suc_empresa FROM sucursal WHERE suc_id = rel_archivo_sucursal.suc_id) as suc_empresa "+
-                " FROM rel_archivo_sucursal WHERE file_id = " + data + ";";
+    let query = "SELECT s.* FROM sucursal s, rel_archivo_sucursal ras WHERE s.suc_id = ras.suc_id and ras.file_id = " + data + ";";
     return helpers.executeQuery(query);
 }
 
