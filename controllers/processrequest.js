@@ -431,7 +431,7 @@ function apiPostFile(metodo, d, file) {
                                 }
                             }
                             //Delete temporal
-                            if (makeThumb) {
+                            if (makeThumb || urlFinal.includes('.')) {
                                 fs.unlinkSync(file.path);
                             }
 
