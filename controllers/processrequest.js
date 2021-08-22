@@ -627,40 +627,41 @@ async function decryptReturn(resultadoPost, metodoID){
     for(let i=0; i<json_workbook.length; i++){
         let suc = sucursalesFile.filter(s => s.suc_empresa == json_workbook[i].sucursal);
         json_workbook[i].valido = 1;
-        if(!suc){
+        if(suc.length == 0){
             json_workbook[i].valido = 0;
         } else {
             if(suc.length > 0) suc = suc[0];
-        }
-        //console.log(json_workbook[i], suc)
-        //valida formato hora
-        let re = new RegExp('^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$');
-        let vIni = re.test(json_workbook[i].hora_inicio);
-        let vFin = re.test(json_workbook[i].hora_fin);
-        if(!vIni || !vFin) json_workbook[i].valido = 0; 
-        if(vIni && vFin){
-            let date = new Date(Date.parse(json_workbook[i].fecha));
-            console.log("fecha",date);
-            let dateNumber = date.getDay();
-            let dateSucIni = new Date(date);
-            //Fecha invalida - domingo
-            if(dateNumber == 0) json_workbook[i].valido = 0; 
-            if(dateNumber > 0 && dateNumber < 6) dateSucIni.setHours(suc.suc_ini_lv.split(':')[0], suc.suc_ini_lv.split(':')[1], '00');
-            else if (dateNumber == 6) dateSucIni.setHours(suc.suc_ini_s.split(':')[0], suc.suc_ini_s.split(':')[1], '00');
-            let dateSucFin = new Date(date);
-            if(dateNumber > 0 && dateNumber < 6) dateSucFin.setHours(suc.suc_fin_lv.split(':')[0], suc.suc_fin_lv.split(':')[1], '00');
-            else if (dateNumber == 6) dateSucFin.setHours(suc.suc_fin_s.split(':')[0], suc.suc_fin_s.split(':')[1], '00');
-            //horario ocupado:
-            let dateIni = new Date(date);
-            let dataFin = new Date(date);
-            dateIni.setHours(json_workbook[i].hora_inicio.split(':')[0], json_workbook[i].hora_inicio.split(':')[1], '00');
-            dataFin.setHours(json_workbook[i].hora_fin.split(':')[0], json_workbook[i].hora_fin.split(':')[1], '00');
-            //valida hora ini es menor a hora fin
-            if(dataFin < dateIni) json_workbook[i].valido = 0; 
-            //valida sucursal
-            if(dateSucIni > dateIni) json_workbook[i].valido = 0; 
-            if(dateSucFin < dataFin) json_workbook[i].valido = 0; 
-            //valida empalme
+
+            //console.log(json_workbook[i], suc)
+            //valida formato hora
+            let re = new RegExp('^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$');
+            let vIni = re.test(json_workbook[i].hora_inicio);
+            let vFin = re.test(json_workbook[i].hora_fin);
+            if(!vIni || !vFin) json_workbook[i].valido = 0; 
+            if(vIni && vFin){
+                let date = new Date(Date.parse(json_workbook[i].fecha));
+                let dateNumber = date.getDay();
+                console.log("fecha",date, dateNumber);
+                let dateSucIni = new Date(date);
+                //Fecha invalida - domingo
+                if(dateNumber == 6) { json_workbook[i].valido = 0; console.log("dom"); }
+                if(dateNumber >= 0 && dateNumber < 5) dateSucIni.setHours(suc.suc_ini_lv.split(':')[0], suc.suc_ini_lv.split(':')[1], '00');
+                else if (dateNumber == 5) dateSucIni.setHours(suc.suc_ini_s.split(':')[0], suc.suc_ini_s.split(':')[1], '00');
+                let dateSucFin = new Date(date);
+                if(dateNumber >= 0 && dateNumber < 5) dateSucFin.setHours(suc.suc_fin_lv.split(':')[0], suc.suc_fin_lv.split(':')[1], '00');
+                else if (dateNumber == 5) dateSucFin.setHours(suc.suc_fin_s.split(':')[0], suc.suc_fin_s.split(':')[1], '00');
+                //horario ocupado:
+                let dateIni = new Date(date);
+                let dataFin = new Date(date);
+                dateIni.setHours(json_workbook[i].hora_inicio.split(':')[0], json_workbook[i].hora_inicio.split(':')[1], '00');
+                dataFin.setHours(json_workbook[i].hora_fin.split(':')[0], json_workbook[i].hora_fin.split(':')[1], '00');
+                //valida hora ini es menor a hora fin
+                if(dataFin < dateIni) { json_workbook[i].valido = 0; console.log("hini menor hfin");}
+                //valida sucursal
+                if(dateSucIni > dateIni) { json_workbook[i].valido = 0; console.log("sucini > ini");}
+                if(dateSucFin < dataFin) { json_workbook[i].valido = 0; console.log("sucfin < fin");}
+                //valida empalme
+            }
         }
 
     }
