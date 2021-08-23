@@ -746,7 +746,7 @@ async function decryptReturn(resultadoPost, metodoID){
         let dia = fecha.getDay();
         let sucIni = suc.suc_ini_lv;
         let sucFin = suc.suc_fin_lv;
-        if(dia == 6) {
+        if(dia == 5) {
             sucIni = suc.suc_ini_s;
             sucFin = suc.suc_fin_s;
         }
