@@ -742,7 +742,8 @@ async function decryptReturn(resultadoPost, metodoID){
   async function setWorkDaySB(datos, token, suc){
 
     return new Promise(function (resolve, reject) {
-        let fecha = new Date(Date.parse(datos.fecha + " 12:00:00"));
+        
+        let fecha = new Date(Date.parse(datos.date + " 12:00:00"));
         let dia = fecha.getDay();
         let sucIni = suc.suc_ini_lv;
         let sucFin = suc.suc_fin_lv;
