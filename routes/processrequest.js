@@ -13,6 +13,7 @@ const imagenesTemporal = multipart({
 
 router.post('/processrequest-add', resolveProcessRequest)
 router.post('/processrequest-sb', resolveSimplyBook)
+router.post('/processrequest-sbd', deleteSimplyBook)
 router.post('/validateUser', validateUser)
 router.post('/apipost/:metodo', apiPost)
 router.get('/apiget/:metodo', apiGet)
@@ -25,6 +26,15 @@ function resolveProcessRequest(req, res) {
             res.json(result)
         })
 }
+
+function deleteSimplyBook(req, res) {
+    var d = req.body;
+    processrequestCtrl.deleteSimplyBook(d)
+        .then(function (result) {
+            res.json(result)
+        })
+}
+
 
 function resolveSimplyBook(req, res){
     var d = req.body;

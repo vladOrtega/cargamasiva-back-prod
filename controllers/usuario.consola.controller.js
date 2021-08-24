@@ -18,7 +18,7 @@ function getUsuarioSessionVal(dato){
     
     return new Promise(function (resolve, reject) {
         var clearData = dato.code.split(' ').join('+')
-        var dataArray = decrypt.decrypt(clearData, resolve).split("|");
+        var dataArray = decrypt.decryptCode(clearData, resolve).split("|");
         let datos = { username: dataArray[0], nip: dataArray[1] };
         UsuarioSistemaModel.getUsuarioByUserName(datos)
             .then(function (result) {

@@ -68,7 +68,7 @@ function Update(data) {
 function Add(data) {
     let query = "insert into usuario_sistema " +
         " ( username, name, nip,id_perfil, usu_status, register_date ) " +
-        " VALUES ( '" + data.username + "', '" + data.name + "','" + data.nip + "', " + data.id_perfil + ", 1, getdate() )";
+        " VALUES ( '" + data.username + "', '" + data.name + "','" + data.nip + "', " + data.id_perfil + ", 1, getdate() ); SELECT * FROM usuario_sistema WHERE id_usuario_sistema = SCOPE_IDENTITY();";
     return helpers.executeQuery(query);
 }
 

@@ -46,6 +46,24 @@ function encryptData(palabra) {
   }
 }
 
+function decryptCode(palabra, resolve) {
+  try {
+    let desencripta = palabra.split('code').join('/')
+    var llave = new Buffer(config.E_KEY).toString('binary');
+    var cipher = crypto.createDecipheriv('aes-128-ecb', llave, '');
+    var encryptdata = cipher.update(desencripta, 'base64', 'utf8')
+    encryptdata += cipher.final('utf-8')
+    return encryptdata;
+  } catch (e) {
+    console.log("erro->" + e)
+    resolve({
+      err: true,
+      descripcion: "Encryption error"
+    });
+  }
+}
+
+
 
 function decrypt(palabra, resolve) {
   try {
@@ -179,5 +197,6 @@ module.exports = {
   decrypt: decrypt,
   decryptReturn: decryptReturn,
   decrypData: decrypData,
-  encryptData: encryptData
+  encryptData: encryptData,
+  decryptCode: decryptCode
 };

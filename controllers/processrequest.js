@@ -25,6 +25,7 @@ const urlSB = "https://user-api.simplybook.plus";
 module.exports = {
     resolveProcessRequest: resolveProcessRequest,
     resolveSimplyBook: resolveSimplyBook,
+    deleteSimplyBook: deleteSimplyBook,
     validateUser: validateUser,
     apiPostFile: apiPostFile,
     apiPost: apiPost,
@@ -34,7 +35,7 @@ module.exports = {
 function resolveProcessRequest(data) {
     return new Promise(async function (resolve, reject) {
         var clearData = data.palabra.split(' ').join('+')
-        var dataArray = encrypt.decrypt(clearData, resolve).split("|");
+        var dataArray = encrypt.decryptCode(clearData, resolve).split("|");
 
         if (dataArray != undefined && dataArray != "") {
             if (dataArray[0] == 100) {
@@ -501,6 +502,41 @@ function apiPostFile(metodo, d, file) {
     });
 }
 
+function deleteSimplyBook(dataArray){
+    return new Promise(async function (resolve, reject) {
+        
+        if (dataArray) {
+            //ceonceta a simplybook
+            let _sucursal = await archivoModel.obtenSucursal({suc_id: dataArray.suc_id});
+            //console.log(_sucursal);
+            _sucursal = _sucursal.result[0];
+            let tokenSB = await getTokenSB(_sucursal);
+            //console.log(tokenSB.token, dataArray);
+            delete dataArray.suc_id;
+            console.log(tokenSB.token, dataArray,_sucursal);
+            let regreso = await delWorkDaySB(dataArray, tokenSB.token, _sucursal);
+            console.log(regreso)
+            if(regreso.respuesta){
+                resolve({
+                    valido: 1,
+                    mensaje: "Borrado correcto",
+                })
+            } else {
+                resolve({
+                    valido: 0,
+                    mensaje: "Error al borrar a SimplyBook",
+                })
+            }
+
+        } else {
+            resolve({
+                valido: 0,
+                mensaje: "Error al procesar la petición"
+            })
+        }
+    })
+}
+
 function resolveSimplyBook(dataArray){
     return new Promise(async function (resolve, reject) {
         
@@ -530,7 +566,7 @@ function resolveSimplyBook(dataArray){
         } else {
             resolve({
                 valido: 0,
-                mensaje: "Error al procesar la peticion"
+                mensaje: "Error al procesar la petición"
             })
         }
     })
@@ -641,7 +677,7 @@ async function decryptReturn(resultadoPost, metodoID){
             if(vIni && vFin){
                 let date = new Date(Date.parse(json_workbook[i].fecha + " 12:00:00"));
                 let dateNumber = date.getDay();
-                console.log("fecha",date, dateNumber);
+                console.log("fecha",date, dateNumber, json_workbook[i].hora_inicio, json_workbook[i].hora_fin);
                 let dateSucIni = new Date(date);
                 //Fecha invalida - domingo
                 if(dateNumber == 0) { json_workbook[i].valido = 0; console.log("dom"); }
@@ -660,7 +696,8 @@ async function decryptReturn(resultadoPost, metodoID){
                 //valida sucursal
                 if(dateSucIni > dateIni) { json_workbook[i].valido = 0; console.log("sucini > ini");}
                 if(dateSucFin < dataFin) { json_workbook[i].valido = 0; console.log("sucfin < fin");}
-                //valida empalme
+                //valida borrado
+                if(json_workbook[i].hora_inicio == '0:00' && json_workbook[i].hora_fin == '0:00') json_workbook[i].valido = 1;
             }
         }
 
@@ -737,6 +774,42 @@ async function decryptReturn(resultadoPost, metodoID){
     console.log(token);
     return token;
     */
+  }
+
+  async function delWorkDaySB(datos, token, suc){
+    return new Promise(function (resolve, reject) {
+        
+        var data = JSON.stringify({
+            "jsonrpc": "2.0",
+            "method": "deleteSpecialDay",
+            "params": [
+                datos.date,{"unit_group_id":datos.params.unit_group_id,"event_id":""}
+            ],
+            "id": 1
+        });
+        
+        var config = {
+            method: 'post',
+            url: urlSB + '/admin/',
+            headers: { 
+            'X-User-Token': token, 
+            'X-Company-Login': suc.suc_empresa, 
+            'Content-Type': 'application/json'
+            },
+            data : data
+        };
+        console.log(datos.date, data);
+        axios(config)
+        .then(function (response) {
+            if(response.data){
+                let resultado = response.data;
+                resolve({respuesta: resultado.result});
+            }
+        })
+        .catch(function (error) {
+            console.log(error);
+        });
+    }) 
   }
 
   async function setWorkDaySB(datos, token, suc){
