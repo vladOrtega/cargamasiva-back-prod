@@ -28,7 +28,7 @@ function resolveProcessRequest(req, res) {
 
 function resolveSimplyBook(req, res){
     var d = req.body;
-    console.log(d);
+    //console.log(d);
     processrequestCtrl.resolveSimplyBook(d)
         .then(function (result) {
             res.json(result)

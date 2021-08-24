@@ -512,7 +512,7 @@ function resolveSimplyBook(dataArray){
             let tokenSB = await getTokenSB(_sucursal);
             //console.log(tokenSB.token, dataArray);
             delete dataArray.suc_id;
-            console.log(tokenSB.token, dataArray);
+            console.log(tokenSB.token, dataArray,_sucursal);
             let regreso = await setWorkDaySB(dataArray, tokenSB.token, _sucursal);
             console.log(regreso)
             if(regreso.respuesta){
@@ -779,7 +779,7 @@ async function decryptReturn(resultadoPost, metodoID){
             },
             data : data
         };
-        console.log(config);
+        console.log(fecha, dia, data);
         axios(config)
         .then(function (response) {
             if(response.data){
