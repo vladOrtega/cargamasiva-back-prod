@@ -1,7 +1,7 @@
 {
-  "user": "APICentral",
-  "password": "AjeXjFo8v*H@",
-  "server": "192.168.71.1",
+  "user": "CargaAgenda",
+  "password": "vcp2R5DE=LqN9EQG",
+  "server": "192.168.1.109",
   "database": "CargaAgenda",
   "multipleStatements": true,
   "options": {
@@ -12,4 +12,4 @@
           "minVersion": "TLSv1"
       }
   }
-} 
+}
