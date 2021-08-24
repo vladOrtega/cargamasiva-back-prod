@@ -639,17 +639,17 @@ async function decryptReturn(resultadoPost, metodoID){
             let vFin = re.test(json_workbook[i].hora_fin);
             if(!vIni || !vFin) json_workbook[i].valido = 0; 
             if(vIni && vFin){
-                let date = new Date(Date.parse(json_workbook[i].fecha));
+                let date = new Date(Date.parse(json_workbook[i].fecha + " 12:00:00"));
                 let dateNumber = date.getDay();
                 console.log("fecha",date, dateNumber);
                 let dateSucIni = new Date(date);
                 //Fecha invalida - domingo
-                if(dateNumber == 6) { json_workbook[i].valido = 0; console.log("dom"); }
-                if(dateNumber >= 0 && dateNumber < 5) dateSucIni.setHours(suc.suc_ini_lv.split(':')[0], suc.suc_ini_lv.split(':')[1], '00');
-                else if (dateNumber == 5) dateSucIni.setHours(suc.suc_ini_s.split(':')[0], suc.suc_ini_s.split(':')[1], '00');
+                if(dateNumber == 0) { json_workbook[i].valido = 0; console.log("dom"); }
+                if(dateNumber >= 1 && dateNumber < 6) dateSucIni.setHours(suc.suc_ini_lv.split(':')[0], suc.suc_ini_lv.split(':')[1], '00');
+                else if (dateNumber == 6) dateSucIni.setHours(suc.suc_ini_s.split(':')[0], suc.suc_ini_s.split(':')[1], '00');
                 let dateSucFin = new Date(date);
-                if(dateNumber >= 0 && dateNumber < 5) dateSucFin.setHours(suc.suc_fin_lv.split(':')[0], suc.suc_fin_lv.split(':')[1], '00');
-                else if (dateNumber == 5) dateSucFin.setHours(suc.suc_fin_s.split(':')[0], suc.suc_fin_s.split(':')[1], '00');
+                if(dateNumber >= 1 && dateNumber < 6) dateSucFin.setHours(suc.suc_fin_lv.split(':')[0], suc.suc_fin_lv.split(':')[1], '00');
+                else if (dateNumber == 6) dateSucFin.setHours(suc.suc_fin_s.split(':')[0], suc.suc_fin_s.split(':')[1], '00');
                 //horario ocupado:
                 let dateIni = new Date(date);
                 let dataFin = new Date(date);
@@ -742,11 +742,11 @@ async function decryptReturn(resultadoPost, metodoID){
   async function setWorkDaySB(datos, token, suc){
 
     return new Promise(function (resolve, reject) {
-        let fecha = new Date(Date.parse(datos.fecha));
+        let fecha = new Date(Date.parse(datos.fecha + " 12:00:00"));
         let dia = fecha.getDay();
         let sucIni = suc.suc_ini_lv;
         let sucFin = suc.suc_fin_lv;
-        if(dia == 5) {
+        if(dia == 6) {
             sucIni = suc.suc_ini_s;
             sucFin = suc.suc_fin_s;
         }
