@@ -1,15 +1,15 @@
 {
-  "user": "CargaAgenda",
-  "password": "vcp2R5DE=LqN9EQG",
+  "user": "APICentral",
+  "password": "AjeXjFo8v*H@",
   "server": "192.168.1.109",
-  "database": "CargaAgenda",
+  "port":64441,
+  "database": "Central",
   "multipleStatements": true,
   "options": {
     "encrypt": true,
     "enableArithAbort": false,
-    "trustServerCertificate": true,
     "cryptoCredentialsDetails": {
           "minVersion": "TLSv1"
       }
   }
-} 
+}
