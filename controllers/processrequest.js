@@ -747,7 +747,7 @@ async function decryptReturn(resultadoPost, metodoID){
                 resolve({valor: 1, token: token.result});
             }
 
-        } catch (err) {
+        } catch (error) {
             // Handle Error Here
             if (error.response) {
                 // The request was made and the server responded with a status code
@@ -833,7 +833,7 @@ async function decryptReturn(resultadoPost, metodoID){
                 resolve({valor: 1, respuesta: resultado.result});
             }
 
-        } catch (err) {
+        } catch (error) {
             // Handle Error Here
             if (error.response) {
                 // The request was made and the server responded with a status code
@@ -937,7 +937,7 @@ async function decryptReturn(resultadoPost, metodoID){
                 resolve({valor: 1, respuesta: resultado.result});
             }
 
-        } catch (err) {
+        } catch (error) {
             // Handle Error Here
             if (error.response) {
                 // The request was made and the server responded with a status code
