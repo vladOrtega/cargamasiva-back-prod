@@ -778,9 +778,9 @@ async function decryptReturn(resultadoPost, metodoID){
   }
 
   async function delWorkDaySB(datos, token, suc){
-    return new Promise(function (resolve, reject) {
+    return new Promise(async function (resolve, reject) {
         
-        var data = JSON.stringify({
+        let data = JSON.stringify({
             "jsonrpc": "2.0",
             "method": "deleteSpecialDay",
             "params": [
@@ -789,7 +789,7 @@ async function decryptReturn(resultadoPost, metodoID){
             "id": 1
         });
         
-        var config = {
+        let config = {
             method: 'post',
             url: urlSB + '/admin/',
             headers: { 
@@ -800,7 +800,7 @@ async function decryptReturn(resultadoPost, metodoID){
             data : data
         };
         console.log(datos.date, data);
-        axios(config)
+        await axios(config)
         .then(function (response) {
             if(response.data){
                 let resultado = response.data;
@@ -832,7 +832,7 @@ async function decryptReturn(resultadoPost, metodoID){
 
   async function setWorkDaySB(datos, token, suc){
 
-    return new Promise(function (resolve, reject) {
+    return new Promise(async function (resolve, reject) {
         
         let fecha = new Date(Date.parse(datos.date + " 12:00:00"));
         let dia = fecha.getDay();
@@ -842,7 +842,7 @@ async function decryptReturn(resultadoPost, metodoID){
             sucIni = suc.suc_ini_s;
             sucFin = suc.suc_fin_s;
         }
-        var data = JSON.stringify({
+        let data = JSON.stringify({
             "jsonrpc": "2.0",
             "method": "setWorkDayInfo",
             "params": [
@@ -874,7 +874,7 @@ async function decryptReturn(resultadoPost, metodoID){
             data : data
         };
         console.log(fecha, dia, data);
-        axios(config)
+        await axios(config)
         .then(function (response) {
             if(response.data){
                 let resultado = response.data;
