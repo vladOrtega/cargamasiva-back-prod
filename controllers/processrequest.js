@@ -17,6 +17,7 @@ const service = require('../modules/encryptToken');
 //const jsonrcp = require('../midlewares/json-rpc-client');
 const SimplyBook = require("simplybook-js-api");
 var axios = require('axios');
+const https = require('https')
 
 const { json } = require('express');
 
@@ -807,7 +808,24 @@ async function decryptReturn(resultadoPost, metodoID){
             }
         })
         .catch(function (error) {
-            console.log(error);
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                // that falls out of the range of 2xx
+                console.log(error.response.data);
+                console.log(error.response.status);
+                console.log(error.response.headers);
+                resolve({valor: 0, error: error.response.status});
+              } else if (error.request) {
+                // The request was made but no response was received
+                // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+                // http.ClientRequest in node.js
+                console.log(error.request);
+                resolve({valor: 0, error: error.request});
+              } else {
+                // Something happened in setting up the request that triggered an Error
+                resolve({valor: 0, error: error.message});
+                console.log('Error', error.message);
+              }
         });
     }) 
   }
@@ -843,14 +861,16 @@ async function decryptReturn(resultadoPost, metodoID){
             "id": 2
         });
         
-        var config = {
+        let config = {
             method: 'post',
             url: urlSB + '/admin/',
+            timeout: 60000, //optional,
             headers: { 
             'X-User-Token': token, 
             'X-Company-Login': suc.suc_empresa, 
             'Content-Type': 'application/json'
             },
+            httpsAgent: new https.Agent({ keepAlive: true }),
             data : data
         };
         console.log(fecha, dia, data);
@@ -858,11 +878,29 @@ async function decryptReturn(resultadoPost, metodoID){
         .then(function (response) {
             if(response.data){
                 let resultado = response.data;
-                resolve({respuesta: resultado.result});
+                resolve({valor: 1, respuesta: resultado.result});
             }
         })
         .catch(function (error) {
-            console.log(error);
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                // that falls out of the range of 2xx
+                console.log(error.response.data);
+                console.log(error.response.status);
+                console.log(error.response.headers);
+                resolve({valor: 0, error: error.response.status});
+              } else if (error.request) {
+                // The request was made but no response was received
+                // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+                // http.ClientRequest in node.js
+                console.log(error.request);
+                resolve({valor: 0, error: error.request});
+              } else {
+                // Something happened in setting up the request that triggered an Error
+                resolve({valor: 0, error: error.message});
+                console.log('Error', error.message);
+              }
+            
         });
     }) 
     /*
