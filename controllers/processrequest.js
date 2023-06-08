@@ -547,23 +547,31 @@ function resolveSimplyBook(dataArray){
             //console.log(_sucursal);
             _sucursal = _sucursal.result[0];
             let tokenSB = await getTokenSB(_sucursal);
-            //console.log(tokenSB.token, dataArray);
-            delete dataArray.suc_id;
-            console.log(tokenSB.token, dataArray,_sucursal);
-            let regreso = await setWorkDaySB(dataArray, tokenSB.token, _sucursal);
-            console.log(regreso)
-            if(regreso.respuesta){
-                resolve({
-                    valido: 1,
-                    mensaje: "Ingreso correcto",
-                })
+            if(tokenSB.valor == 1){
+                delete dataArray.suc_id;
+                console.log(tokenSB.token, dataArray, _sucursal);
+                let regreso = await setWorkDaySB(dataArray, tokenSB.token, _sucursal);
+                console.log(regreso)
+                if(regreso.respuesta){
+                    resolve({
+                        valido: 1,
+                        mensaje: "Ingreso correcto",
+                    })
+                } else {
+                    resolve({
+                        valido: 0,
+                        mensaje: "Error al ingresar a SimplyBook",
+                    })
+                }
+    
             } else {
                 resolve({
                     valido: 0,
-                    mensaje: "Error al ingresar a SimplyBook",
+                    mensaje: "Error al obtener el token",
                 })
             }
-
+            //console.log(tokenSB.token, dataArray);
+            
         } else {
             resolve({
                 valido: 0,
@@ -709,10 +717,10 @@ async function decryptReturn(resultadoPost, metodoID){
 
   async function getTokenSB(datos){
     
-    return new Promise(function (resolve, reject) {
+    return new Promise(async function (resolve, reject) {
         let password = encrypt.decrypt(datos.suc_password);
         console.log("------",password);
-        var data = JSON.stringify({
+        let data = JSON.stringify({
             "jsonrpc": "2.0",
             "method": "getUserToken",
             "params": [
@@ -723,7 +731,7 @@ async function decryptReturn(resultadoPost, metodoID){
             "id": 1
         });
         
-        var config = {
+        let config = {
             method: 'post',
             url: urlSB + '/login',
             headers: { 
@@ -732,18 +740,36 @@ async function decryptReturn(resultadoPost, metodoID){
             data : data
         };
         
-        axios(config)
-        .then(function (response) {
-            if(response){
-                let token = response.data;
-                resolve({token: token.result});
+        try {
+            const resp = await axios(config);
+            if(resp.data){
+                let token = resp.data;
+                resolve({valor: 1, token: token.result});
             }
-        })
-        .catch(function (error) {
-            console.log(error);
-        });
+
+        } catch (err) {
+            // Handle Error Here
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                // that falls out of the range of 2xx
+                console.log(error.response.data);
+                console.log(error.response.status);
+                console.log(error.response.headers);
+                resolve({valor: 0, error: error.response.status});
+            } else if (error.request) {
+                // The request was made but no response was received
+                // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+                // http.ClientRequest in node.js
+                console.log(error.request);
+                resolve({valor: 0, error: error.request});
+            } else {
+                // Something happened in setting up the request that triggered an Error
+                resolve({valor: 0, error: error.message});
+                console.log('Error', error.message);
+            }
+        }
       
-    })  
+    });  
 
     /*
     const simplyBook = new SimplyBook(
