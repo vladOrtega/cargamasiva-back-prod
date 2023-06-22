@@ -16,7 +16,7 @@ const apiUserConsolaModel = require('../models/api_user.consola.model');
 const service = require('../modules/encryptToken');
 //const jsonrcp = require('../midlewares/json-rpc-client');
 const SimplyBook = require("simplybook-js-api");
-var axios = require('axios');
+let axios = require('axios');
 const https = require('https')
 
 const { json } = require('express');
@@ -36,8 +36,8 @@ module.exports = {
 
 function resolveProcessRequest(data) {
     return new Promise(async function (resolve, reject) {
-        var clearData = data.palabra.split(' ').join('+')
-        var dataArray = encrypt.decryptCode(clearData, resolve).split("|");
+        let clearData = data.palabra.split(' ').join('+')
+        let dataArray = encrypt.decryptCode(clearData, resolve).split("|");
 
         if (dataArray != undefined && dataArray != "") {
             if (dataArray[0] == 100) {
@@ -105,7 +105,6 @@ function validateUser(datos) {
                 }
             });
         } else {
-            //reject("Datos incorrectos");
             reject("400");
         
         }
@@ -159,21 +158,10 @@ function apiGet(metodo) {
                     });
                 } else {
                     reject("404");
-                    /*resolve({
-                        valido: 0,
-                        mensaje: "Error, No existe el metodo"
-                    });*/
                 }
             } else {
                 reject("405");
-                /*
-                resolve({
-                    valido: 0,
-                    mensaje: "Error al obtener los datos, intente nuevamente"
-                });*/
             }
-        //});
-
     });
 }
 
