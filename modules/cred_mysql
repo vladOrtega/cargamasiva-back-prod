@@ -1,7 +1,8 @@
 {
-  "user": "APICentral",
+  "user": "CargaAgenda",
   "password": "AjeXjFo8v*H@",
-  "server": "192.168.71.1",
+  "server": "192.168.71.100",
+  "port":64441,
   "database": "CargaAgenda",
   "multipleStatements": true,
   "options": {

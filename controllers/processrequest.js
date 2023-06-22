@@ -22,6 +22,7 @@ const https = require('https')
 const { json } = require('express');
 
 const urlSB = "https://user-api.simplybook.plus";
+const urlSB2 = "https://user-api-v2.simplybook.plus";
 
 module.exports = {
     resolveProcessRequest: resolveProcessRequest,
@@ -30,7 +31,7 @@ module.exports = {
     validateUser: validateUser,
     apiPostFile: apiPostFile,
     apiPost: apiPost,
-    apiGet: apiGet,
+    apiGet: apiGet
 }
 
 function resolveProcessRequest(data) {
@@ -718,56 +719,99 @@ async function decryptReturn(resultadoPost, metodoID){
   async function getTokenSB(datos){
     
     return new Promise(async function (resolve, reject) {
-        let password = encrypt.decrypt(datos.suc_password);
-        console.log("------",password);
-        let data = JSON.stringify({
-            "jsonrpc": "2.0",
-            "method": "getUserToken",
-            "params": [
-            datos.suc_empresa,
-            datos.suc_usuario,
-            password
-            ],
-            "id": 1
-        });
-        
-        let config = {
-            method: 'post',
-            url: urlSB + '/login',
-            headers: { 
-            'Content-Type': 'application/json'
-            },
-            data : data
-        };
-        
-        try {
-            const resp = await axios(config);
-            if(resp.data){
-                let token = resp.data;
-                resolve({valor: 1, token: token.result});
-            }
 
-        } catch (error) {
-            // Handle Error Here
-            if (error.response) {
-                // The request was made and the server responded with a status code
-                // that falls out of the range of 2xx
-                console.log(error.response.data);
-                console.log(error.response.status);
-                console.log(error.response.headers);
-                resolve({valor: 0, error: error.response.status});
-            } else if (error.request) {
-                // The request was made but no response was received
-                // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-                // http.ClientRequest in node.js
-                console.log(error.request);
-                resolve({valor: 0, error: error.request});
-            } else {
-                // Something happened in setting up the request that triggered an Error
-                resolve({valor: 0, error: error.message});
-                console.log('Error', error.message);
+        let genera = 0;
+        if(datos.suc_tokenSB != '0'){
+            //Verifica el token
+            let data = {
+                "company": datos.suc_empresa,
+                "refresh_token": datos.suc_tokenSB
+            };
+
+            try {
+                const res = await axios.post(urlSB2 + "/admin/auth/refresh-token", data);
+                
+                let uptFile= await archivoModel.insertTokenDB(res.data.refresh_token, datos.suc_id);
+                
+                resolve({valor: 1, token: res.data.token});
+
+            } catch (error) {
+                // Handle errors
+                //resolve({valor: 0, error: error});
+                console.log("Error", error);
+                genera = 1;
             }
+            
+        } else {
+            genera = 1;
         }
+        if(genera == 1){
+            let password = encrypt.decrypt(datos.suc_password);
+            let data2 = {
+                "company": datos.suc_empresa,
+                "login": datos.suc_usuario,
+                "password": password
+            };
+
+            const res = await axios.post(urlSB2 + "/admin/auth", data2);
+            let uptFile= await archivoModel.insertTokenDB(res.data.refresh_token, datos.suc_id);
+            resolve({valor: 1, token: res.data.token});
+            /*
+            console.log("------",password);
+            let data = JSON.stringify({
+                "jsonrpc": "2.0",
+                "method": "getUserToken",
+                "params": [
+                datos.suc_empresa,
+                datos.suc_usuario,
+                password
+                ],
+                "id": 1
+            });
+            
+            let config = {
+                method: 'post',
+                url: urlSB + '/login',
+                headers: { 
+                'Content-Type': 'application/json'
+                },
+                data : data
+            };
+            
+            try {
+                const resp = await axios(config);
+                if(resp.data){
+                    let token = resp.data;
+                    let uptFile= await archivoModel.insertTokenDB(token.result, datos.suc_id);
+                    resolve({valor: 1, token: token.result});
+                }
+    
+            } catch (error) {
+                // Handle Error Here
+                if (error.response) {
+                    // The request was made and the server responded with a status code
+                    // that falls out of the range of 2xx
+                    console.log(error.response.data);
+                    console.log(error.response.status);
+                    console.log(error.response.headers);
+                    resolve({valor: 0, error: error.response.status});
+                } else if (error.request) {
+                    // The request was made but no response was received
+                    // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+                    // http.ClientRequest in node.js
+                    console.log(error.request);
+                    resolve({valor: 0, error: error.request});
+                } else {
+                    // Something happened in setting up the request that triggered an Error
+                    resolve({valor: 0, error: error.message});
+                    console.log('Error', error.message);
+                }
+            }
+            */
+        }
+        
+
+        
       
     });  
 

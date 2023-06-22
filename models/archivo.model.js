@@ -4,6 +4,7 @@ const helpers = require('../modules/helpers');
 module.exports = {
     obtenSucursales: obtenSucursales,
     obtenSucursal: obtenSucursal,
+    insertTokenDB: insertTokenDB
 }
 
 function obtenSucursales(data) {
@@ -14,5 +15,10 @@ function obtenSucursales(data) {
 function obtenSucursal(data){
     let query = "SELECT * "+
                 " FROM sucursal WHERE suc_id = " + data.suc_id + ";";
+    return helpers.executeQuery(query);
+}
+
+function insertTokenDB(token,sucID) {
+    let query = "UPDATE Sucursal  SET suc_tokenSB = '"+token+"' WHERE suc_id=" + sucID + ";";
     return helpers.executeQuery(query);
 }
