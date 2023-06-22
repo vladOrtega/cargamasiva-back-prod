@@ -179,7 +179,7 @@ function apiPost(metodo, d) {
                     //apiAdminModel.getParamsMetodo(metodoApi[0]).then(async function (result) {
                         result = apiAdminModel.getParamsMetodo(metodoApi[0]);
                         if (!result.err) {
-                            var paramsApi = result.result;
+                            let paramsApi = result.result;
                             let parametrosEntrada = 0;
                             //Validacion tipo de campo
                             let valorEncriptar = '';
@@ -237,7 +237,7 @@ function apiPost(metodo, d) {
                                     }
                                 } else {
                                     //meter push a array
-                                    var objeto = new Object();
+                                    let objeto = new Object();
                                     for (const value of paramsApi) {
                                         if(d[value.apimetodcamp_nombre]) objeto[value.apimetodcamp_nombre] = d[value.apimetodcamp_nombre];
                                     }
@@ -253,7 +253,7 @@ function apiPost(metodo, d) {
                                 });
                                 for(const item of arryInsert){
                                     parametrosEntrada = 0;
-                                    var arrParams = [];
+                                    let arrParams = [];
                                     //Concatena valores para stored
                                     //paramsApi.forEach(function (value, i) {
                                     for (const value of paramsApi) {
@@ -295,10 +295,7 @@ function apiPost(metodo, d) {
                                     } else {
                                         item.error = "Error en los parametros, favor de verificar";
                                         arryError.push(item);
-                                        /*resolve({
-                                            valido: 0,
-                                            mensaje: "Error en los parametros, favor de verificar",
-                                        });*/
+                                        
                                     } // parametrosEntrada = length
                                     indexInsert++;
                                 } //for array
@@ -328,19 +325,12 @@ function apiPost(metodo, d) {
                     //});
                 } else {
                     reject("404");
-                    /*resolve({
-                        valido: 0,
-                        mensaje: "Error, No existe el metodo"
-                    });*/
+                    
                 }
             } else {
                 reject("405")
-                /*resolve({
-                    valido: 0,
-                    mensaje: "Error al obtener los datos, intente nuevamente"
-                });*/
+                
             }
-        //});
 
     });
 }
@@ -370,13 +360,13 @@ function apiPostFile(metodo, d, file) {
                     result = apiAdminModel.getParamsMetodo(metodoApi[0]);
                     //apiAdminModel.getParamsMetodo(metodoApi[0]).then(function (result) {
                         if (!result.err) {
-                            var urlFinal = "";
-                            var campoUrl = "";
-                            var urlFinalThumb = "";
-                            var campoURLThumb = "";
-                            var paramsApi = result.result;
+                            let urlFinal = "";
+                            let campoUrl = "";
+                            let urlFinalThumb = "";
+                            let campoURLThumb = "";
+                            let paramsApi = result.result;
                             let parametrosEntrada = 0;
-                            var arrParams = [];
+                            let arrParams = [];
                             for (const value of paramsApi) {
                                 //tienne image?
                                 if (value.apimetodcamp_key == 2) {
@@ -408,7 +398,7 @@ function apiPostFile(metodo, d, file) {
                                 }
                             }
                             //upload Thumbnail
-                            var makeThumb = null;
+                            let makeThumb = null;
                             if (file && urlFinalThumb) {
                                 if (!fs.existsSync(urlFinalThumb)) {
                                     //crea el path
@@ -445,8 +435,6 @@ function apiPostFile(metodo, d, file) {
                                 //apiAdminModel.executeStored(query).then(function (result) {
                                     //console.log("----",regresoQ)
                                     let regreso = regresoQ;
-                                    //if (Array.isArray(regresoQ)) regreso = regresoQ;
-                                    //else regreso = regresoQ;
                                     if (regresoQ) {
                                         resolve({
                                             valido: 1,
@@ -572,7 +560,7 @@ function resolveSimplyBook(dataArray){
 
 async function makeThumbFunc(file, urlFinalThumb) {
 
-    var makeThumb = await imageThumbnail(file.path).then(thumbnail => {
+    let makeThumb = await imageThumbnail(file.path).then(thumbnail => {
         let filename = path.basename(file.path);
         let thumbname = urlFinalThumb + filename;
         fs.writeFile(thumbname, thumbnail, 'base64', function (err) {
