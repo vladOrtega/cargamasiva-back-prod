@@ -24,6 +24,8 @@ const { json } = require('express');
 const urlSB = "https://user-api.simplybook.plus";
 const urlSB2 = "https://user-api-v2.simplybook.plus";
 
+let settingsAxios = { timeout: 60000 }
+
 module.exports = {
     resolveProcessRequest: resolveProcessRequest,
     resolveSimplyBook: resolveSimplyBook,
@@ -705,7 +707,7 @@ async function decryptReturn(resultadoPost, metodoID){
             };
 
             try {
-                const res = await axios.post(urlSB2 + "/admin/auth/refresh-token", data);
+                const res = await axios.post(urlSB2 + "/admin/auth/refresh-token", data, settingsAxios);
                 
                 let uptFile= await archivoModel.insertTokenDB(res.data.refresh_token, datos.suc_id);
                 
@@ -729,7 +731,7 @@ async function decryptReturn(resultadoPost, metodoID){
                 "password": password
             };
 
-            const res = await axios.post(urlSB2 + "/admin/auth", data2);
+            const res = await axios.post(urlSB2 + "/admin/auth", data2, settingsAxios);
             let uptFile= await archivoModel.insertTokenDB(res.data.refresh_token, datos.suc_id);
             resolve({valor: 1, token: res.data.token});
             /*
@@ -838,10 +840,11 @@ async function decryptReturn(resultadoPost, metodoID){
         let config = {
             method: 'post',
             url: urlSB + '/admin/',
+            timeout: 60000, //optional,
             headers: { 
-            'X-User-Token': token, 
-            'X-Company-Login': suc.suc_empresa, 
-            'Content-Type': 'application/json'
+                'X-User-Token': token, 
+                'X-Company-Login': suc.suc_empresa, 
+                'Content-Type': 'application/json'
             },
             data : data
         };
@@ -942,9 +945,9 @@ async function decryptReturn(resultadoPost, metodoID){
             url: urlSB + '/admin/',
             timeout: 60000, //optional,
             headers: { 
-            'X-User-Token': token, 
-            'X-Company-Login': suc.suc_empresa, 
-            'Content-Type': 'application/json'
+                'X-User-Token': token, 
+                'X-Company-Login': suc.suc_empresa, 
+                'Content-Type': 'application/json'
             },
             httpsAgent: new https.Agent({ keepAlive: true }),
             data : data
