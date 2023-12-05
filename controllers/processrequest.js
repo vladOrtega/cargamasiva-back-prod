@@ -712,7 +712,7 @@ async function decryptReturn(resultadoPost, metodoID){
             var data = JSON.stringify({
                 jsonrpc:"2.0",
                 method: "getUserToken",
-                "params": [datos.suc_empresa, 'cargamasiva2', 'p4N@WNOkrmPsD'],
+                "params": [datos.suc_empresa, 'cargamasivados', 'p4N@WNOkrmPsD'],
                 id:1
             });   
             var config = {
