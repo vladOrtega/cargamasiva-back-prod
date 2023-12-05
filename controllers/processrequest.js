@@ -701,12 +701,44 @@ async function decryptReturn(resultadoPost, metodoID){
         let genera = 0;
         if(datos.suc_tokenSB != '0'){
             //Verifica el token
+
+            /*
             let data = {
                 "company": datos.suc_empresa,
                 "refresh_token": datos.suc_tokenSB
             };
+            */
 
-            try {
+            var data = JSON.stringify({
+                jsonrpc:"2.0",
+                method: "getUserToken",
+                "params": [datos.suc_empresa, 'cargamasiva', 'p4N@WNOkrmPsD'],
+                id:1
+            });   
+            var config = {
+                method: 'post',
+                url: `https://user-api.simplybook.plus/login/`,
+                headers: { 
+                    'Content-Type': 'application/json'                           
+                },
+                data : data
+            };
+            let newTokenResult=''
+            await  axios(config)
+            .then(function (response) {
+                newTokenResult = response.data.result
+              })
+              .catch(function (error) {
+                  console.log(error);
+              });
+            
+             console.log("Nuevo Token -->" , newTokenResult)
+
+
+              resolve({valor:1, token:newTokenResult })
+            
+              /*
+              try {
                 const res = await axios.post(urlSB2 + "/admin/auth/refresh-token", data, settingsAxios);
                 
                 let uptFile= await archivoModel.insertTokenDB(res.data.refresh_token, datos.suc_id);
@@ -719,7 +751,19 @@ async function decryptReturn(resultadoPost, metodoID){
                 console.log("Error", error);
                 genera = 1;
             }
+            */
             
+
+
+
+
+
+
+
+
+
+
+
         } else {
             genera = 1;
         }
