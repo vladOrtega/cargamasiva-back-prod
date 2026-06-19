@@ -75,6 +75,7 @@ function resolveProcessRequest(data) {
 }
 
 function validateUser(datos) {
+    cocnsole.log("Datos llegando a funcion", datos);
     return new Promise(function (resolve, reject) {
         if (datos.key) {
             //Validar Key
@@ -82,10 +83,12 @@ function validateUser(datos) {
                 if (!result.err) {
                     let validaUser = result.result;
                     if (validaUser.length > 0) {
+                    
                         let datos = {
                             usu_id: validaUser[0].api_user_id,
                             api_user_name: validaUser[0].api_user_name
                         }
+                        console.log("Datos del usuario validados", datos);
                         resolve({
                             valido: 1,
                             mensaje: "Datos correctos",
