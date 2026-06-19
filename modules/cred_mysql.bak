@@ -1,0 +1,48 @@
+{
+  "user": "CargaAgenda",
+  "password": "AjeXjFo8v*H@",
+  "server": "192.168.71.100",
+  "port":64441,
+  "database": "CargaAgenda",
+  "multipleStatements": true,
+  "options": {
+    "encrypt": true,
+    "enableArithAbort": false,
+    "trustServerCertificate": true,
+    "cryptoCredentialsDetails": {
+          "minVersion": "TLSv1"
+      }
+  }
+} 
+
+{
+  "user": "CargaAgenda",
+  "password": "vcp2R5DE=LqN9EQG",
+  "server": "192.168.1.109",
+  "port":64441,
+  "database": "CargaAgenda",
+  "multipleStatements": true,
+  "options": {
+    "encrypt": true,
+    "enableArithAbort": false,
+    "trustServerCertificate": true,
+    "cryptoCredentialsDetails": {
+          "minVersion": "TLSv1"
+      }
+  }
+} 
+
+
+{
+  "user": "ariasmob",
+  "password": "3bmuD9nXccS23c8K",
+  "server": "ip161.ip-192-99-229.net",
+  "database": "ingenes_api",
+  "multipleStatements": true,
+  "options": {
+    "encrypt": true,
+    "enableArithAbort": false
+  }
+} 
+
+
