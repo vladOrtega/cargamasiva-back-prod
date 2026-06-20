@@ -526,14 +526,15 @@ function resolveSimplyBook(dataArray){
         if (dataArray) {
             //ceonceta a simplybook
             let _sucursal = await archivoModel.obtenSucursal({suc_id: dataArray.suc_id});
-            //console.log(_sucursal);
             _sucursal = _sucursal.result[0];
+            console.log('[DEBUG] sucursal:', JSON.stringify(_sucursal));
             let tokenSB = await getTokenSB(_sucursal);
+            console.log('[DEBUG] tokenSB:', JSON.stringify(tokenSB));
             if(tokenSB.valor == 1){
                 delete dataArray.suc_id;
-                console.log(tokenSB.token, dataArray, _sucursal);
+                console.log('[DEBUG] dataArray a enviar:', JSON.stringify(dataArray));
                 let regreso = await setWorkDaySB(dataArray, tokenSB.token, _sucursal);
-                console.log(regreso)
+                console.log('[DEBUG] respuesta setWorkDaySB:', JSON.stringify(regreso));
                 if(regreso.respuesta){
                     resolve({
                         valido: 1,
@@ -721,13 +722,19 @@ async function decryptReturn(resultadoPost, metodoID){
             let newTokenResult=''
             await  axios(config)
             .then(function (response) {
-                newTokenResult = response.data.result    
+                newTokenResult = response.data.result
+                console.log('SimplyBook getUserToken response:', JSON.stringify(response.data));
               })
               .catch(function (error) {
-                  console.log(error);
+                  console.log('SimplyBook getUserToken error:', error.message);
               });
-            
-              resolve({valor:1, token:newTokenResult })
+
+              if(!newTokenResult){
+                  console.log('SimplyBook token vacio/undefined, suc:', datos.suc_empresa);
+                  resolve({valor:0, error:'No se pudo obtener token de SimplyBook'});
+              } else {
+                  resolve({valor:1, token:newTokenResult });
+              }
         
         } else {
             genera = 1;
