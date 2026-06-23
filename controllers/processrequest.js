@@ -527,14 +527,10 @@ function resolveSimplyBook(dataArray){
             //ceonceta a simplybook
             let _sucursal = await archivoModel.obtenSucursal({suc_id: dataArray.suc_id});
             _sucursal = _sucursal.result[0];
-            console.log('[DEBUG] sucursal:', JSON.stringify(_sucursal));
             let tokenSB = await getTokenSB(_sucursal);
-            console.log('[DEBUG] tokenSB:', JSON.stringify(tokenSB));
             if(tokenSB.valor == 1){
                 delete dataArray.suc_id;
-                console.log('[DEBUG] dataArray a enviar:', JSON.stringify(dataArray));
                 let regreso = await setWorkDaySB(dataArray, tokenSB.token, _sucursal);
-                console.log('[DEBUG] respuesta setWorkDaySB:', JSON.stringify(regreso));
                 if(regreso.respuesta){
                     resolve({
                         valido: 1,
@@ -708,7 +704,7 @@ async function decryptReturn(resultadoPost, metodoID){
             var data = JSON.stringify({
                 jsonrpc:"2.0",
                 method: "getUserToken",
-                "params": [datos.suc_empresa, 'cargamasivados', 'p4N@WNOkrmPsD'],
+                "params": [datos.suc_empresa, datos.suc_sb_login, datos.suc_sb_apikey],
                 id:1
             });   
             var config = {
@@ -723,14 +719,12 @@ async function decryptReturn(resultadoPost, metodoID){
             await  axios(config)
             .then(function (response) {
                 newTokenResult = response.data.result
-                console.log('SimplyBook getUserToken response:', JSON.stringify(response.data));
               })
               .catch(function (error) {
-                  console.log('SimplyBook getUserToken error:', error.message);
+                  console.log(error);
               });
 
               if(!newTokenResult){
-                  console.log('SimplyBook token vacio/undefined, suc:', datos.suc_empresa);
                   resolve({valor:0, error:'No se pudo obtener token de SimplyBook'});
               } else {
                   resolve({valor:1, token:newTokenResult });
