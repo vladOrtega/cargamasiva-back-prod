@@ -23,6 +23,7 @@ const { json } = require('express');
 
 const urlSB = "https://user-api.simplybook.plus";
 const urlSB2 = "https://user-api-v2.simplybook.plus";
+const sbCredentials = JSON.parse(fs.readFileSync(__dirname + '/../modules/simplybook_credentials.json', 'utf8'));
 
 let settingsAxios = { timeout: 60000 }
 
@@ -704,7 +705,7 @@ async function decryptReturn(resultadoPost, metodoID){
             var data = JSON.stringify({
                 jsonrpc:"2.0",
                 method: "getUserToken",
-                "params": [datos.suc_empresa, datos.suc_sb_login, datos.suc_sb_apikey],
+                "params": [datos.suc_empresa, sbCredentials[datos.suc_empresa].login, sbCredentials[datos.suc_empresa].apikey],
                 id:1
             });   
             var config = {
